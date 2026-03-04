@@ -1,0 +1,7 @@
+openai
+openpyxl
+pandas
+psutil
+PyMuPDF
+python-docx
+xlwings
