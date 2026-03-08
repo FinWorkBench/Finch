@@ -165,9 +165,9 @@ python src/organize_files.py \
 
 | Argument | Description |
 |---|---|
-| `--dataset-dir` | Dataset directory containing the JSONL file (auto-detected) |
-| `--output-dir` | Model output directory (one subdirectory per model) |
-| `--target-dir` | Organized output directory used by downstream pipeline steps |
+| `--dataset-dir` | **(Required)** Dataset directory containing the JSONL file (auto-detected) |
+| `--output-dir` | **(Required)** Model output directory (one subdirectory per model) |
+| `--target-dir` | **(Required)** Organized output directory used by downstream pipeline steps |
 | `--log-level` | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, or `ERROR` |
 
 ### `preprocessor/` -- Preprocess Files
