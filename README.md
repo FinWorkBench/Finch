@@ -34,7 +34,7 @@ src/
 
 This guide walks you through: **download dataset &rarr; preprocess &rarr; build prompts &rarr; run GPT Judge &rarr; get `results.xlsx`**.
 
-> **Shortcut:** If you want to reuse our preprocessed results for GPT-5.1 Pro, Claude Sonnet 4.5, and Claude Opus 4.5, download them from [Google Drive](https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link) and skip directly to [Step 4 (Run GPT Judge)](#4--run-gpt-judge).
+> **Shortcut:** If you want to reuse our preprocessed results for GPT-5.1 Pro, Claude Sonnet 4.5, and Claude Opus 4.5, download them from [Google Drive](https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link) and skip directly to Run GPT Judge.
 
 ### 1) :gear: Prerequisites
 
