@@ -120,6 +120,8 @@ eval_set/
 
 ### 5) :bar_chart: Run GPT Judge
 
+Here `eval_set` is the `--target-dir` from Step 4 (or the directory you downloaded from Google Drive). It should contain one subdirectory per model, each with a `content_parts.jsonl` inside.
+
 ```bash
 python src/call_gpt_judge.py eval_set -o results.xlsx \
     --api-key "<YOUR_KEY>" \
