@@ -1,63 +1,66 @@
-# FinWorkBench: Benchmarking Finance & Accounting across Spreadsheet-Centric Enterprise Workflows
+# FinWorkBench (Finch): Benchmarking Finance & Accounting Across Spreadsheet-Centric Enterprise Workflows
 
-This repository contains the evaluation code for **FinWorkBench**, an enterprise-grade benchmark for evaluating an agent’s ability to work like a skilled finance & accounting expert on real-world professional workflows.
+> 📊 End-to-end evaluation pipeline for **FinWorkBench (Finch)**: organize task files, preprocess multimodal artifacts, build judge-ready prompts, and score model outputs.
 
-* **Dataset**: https://huggingface.co/datasets/FinWorkBench/Finch
-* **Paper**: https://arxiv.org/abs/2512.13168
+## 🔗 Resources
+- **Dataset**: [FinWorkBench/Finch on Hugging Face](https://huggingface.co/datasets/FinWorkBench/Finch)
+- **Paper**: [arXiv:2512.13168](https://arxiv.org/abs/2512.13168)
 
-This directory contains the complete pipeline scripts from labeled data to evaluation content generation. The core flow is:
+This repository contains the full pipeline from labeled JSONL tasks to GPT-judge-based evaluation.
 
-**JSONL task set → organize model outputs + source/reference files → preprocess files → build prompts → GPT Judge scoring.**
+Core flow:
 
-The JSONL task set is already included in the **huggingface-Finch** dataset. You can also organize your own JSONL task set following the same conventions. JSONL task set is agreed to be in the dataset root directory.
+`JSONL task set -> organize outputs/source/reference files -> preprocess files -> build prompts -> GPT Judge scoring`
 
----
-
-## Quick Start (Finch / FinWorkBench)
-
-This quick start walks you through: **download dataset → preprocess eval set → build prompts → run GPT Judge → get `results.xlsx`**.
-
-If you want to **reuse our peprocessed results** for GPT 5.1 Pro, Claude Sonnect 4.5, and Claude Opus 4.5, please directly download them from https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link and **directly run GPT Judge** by skipping dataset downloading and preprocessing.
+The official JSONL task set is included in the Hugging Face dataset. You can also prepare your own JSONL task set using the same schema.
 
 ---
 
-### 0) Prerequisites
+## 🚀 Quick Start (Finch / FinWorkBench)
 
-* Python 3.9+ recommended
-* Install dependencies (adjust to your project setup):
+This quick start walks through:
+**download dataset -> preprocess eval set -> build prompts -> run GPT Judge -> generate `results.xlsx`**.
+
+If you want to reuse previously processed results for GPT-5.1 Pro, Claude Sonnet 4.5, and Claude Opus 4.5, you can download them directly from https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link and skip dataset preprocessing.
+
+---
+
+### 0) ✅ Prerequisites
+
+- Python 3.9+
+- Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If you don’t have a requirements file, you will at least need:
+If needed, install core packages manually:
 
 ```bash
 pip install pandas openpyxl pymupdf python-docx xlwings openai
 ```
 
 **Notes**
-
-* Excel preprocessing needs **Microsoft Excel installed** (via `xlwings`) on Windows for best stability.
-* PDF preprocessing needs `PyMuPDF` (`fitz`).
+- Excel preprocessing relies on **Microsoft Excel** (through `xlwings`) and is most stable on Windows.
+- PDF preprocessing relies on `PyMuPDF` (`fitz`).
 
 ---
 
-### 1) Download the Finch dataset
+### 1) 📥 Download the Finch dataset
 
 ```bash
 git clone https://huggingface.co/datasets/FinWorkBench/Finch
 ```
 
-This creates a local folder named `Finch/` containing the dataset JSONL and source/reference files.
+This creates a local `Finch/` directory containing JSONL tasks and source/reference files.
 
 ---
 
-### 2) Prepare your model outputs directory
+### 2) 🗂 Prepare your model output directory
 
-You need a directory that contains your model outputs in the expected structure (typically one subfolder per model). For example:
+Expected structure (example):
 
-```
+```text
 YOUR_MODEL_OUTPUT/
   opus_4.5_output/
     0.xlsx
@@ -66,30 +69,31 @@ YOUR_MODEL_OUTPUT/
     0.xlsx
     ...
 ```
-For the model’s text output, it can be saved into a `.txt` file. For example, the model output of Task 1 can be saved as `1.txt`.
 
-If there are multiple files of the same type, name them as `id_1.*`, `id_2.*` or `id-1.*`, `id-2.*`. For example, if there are multiple PNG images, name them `id_1.png`, `id_2.png` or `id-1.png`, `id-2.png`.
+For text-only answers, save outputs as `.txt` files (for example, task 1 -> `1.txt`).
+
+If a task has multiple files of the same type, use:
+- `id_1.*`, `id_2.*`, ...
+- or `id-1.*`, `id-2.*`, ...
 
 ---
 
-### 3) Run the 3-step pipeline (organize → preprocess → build prompts)
+### 3) 🏗 Run the 3-step pipeline (organize -> preprocess -> build prompts)
 
 ```bash
-python src/prompt_build_pipeline.py --dataset-dir Finch --output-dir "YOUR MODEL OUTPUT" --target-dir eval_set
+python src/prompt_build_pipeline.py --dataset-dir Finch --output-dir "YOUR_MODEL_OUTPUT" --target-dir eval_set
 ```
 
 What this does:
+- Reads Finch JSONL tasks
+- Organizes files into `eval_set/<model>/<task_id>/...`
+- Runs preprocessors (PDF/Word/Excel/Markdown/Image) and updates `metadata.json`
+- Builds evaluation payloads and generates:
+  - `eval_set/<model>/content_parts.jsonl`
 
-* Reads the Finch JSONL tasks
-* Organizes files into: `eval_set/<model>/<task_id>/...`
-* Runs preprocessors (PDF/Word/Excel/Markdown/Image) and writes `metadata.json`
-* Builds evaluation inputs and generates:
+Expected structure after this step:
 
-  * `eval_set/<model>/content_parts.jsonl`
-
-After this step, your directory should look like:
-
-```
+```text
 eval_set/
   opus_4.5_output/
     content_parts.jsonl
@@ -105,43 +109,32 @@ eval_set/
 
 ---
 
-### 4) Run GPT Judge and generate Excel results
+### 4) 🤖 Run GPT Judge and generate Excel results
 
 ```bash
-python src/call_gpt_judge.py eval_set -o results.xlsx
+python src/call_gpt_judge.py eval_set -o results.xlsx --api-key "<YOUR_KEY>" --azure-endpoint "<YOUR_ENDPOINT>" --api-version "<YYYY-MM-DD>" --model "<DEPLOYMENT_NAME>"
 ```
 
 What happens:
+- For each `eval_set/<model>/content_parts.jsonl`
+- Calls your configured Azure OpenAI judge model
+- Writes per-model results to:
 
-* For each `eval_set/<model>/content_parts.jsonl`
-* Calls your configured Azure OpenAI judge model
-* Writes per-model results to:
-
-```
+```text
 eval_set/<model>/results.xlsx
-```
-
-So you will get something like:
-
-```
-eval_set/
-  opus_4.5_output/
-    results.xlsx
-  gpt4o_output/
-    results.xlsx
 ```
 
 ---
 
-### 5) Common options (optional)
+### 5) 🧩 Common options
 
-**Only evaluate some models**
+**Evaluate selected models only**
 
 ```bash
 python src/call_gpt_judge.py eval_set --models opus_4.5_output,gpt4o_output -o results.xlsx
 ```
 
-**Re-run everything (don’t skip processed tasks)**
+**Re-run everything (do not skip processed tasks)**
 
 ```bash
 python src/call_gpt_judge.py eval_set -o results.xlsx --no-skip-processed
@@ -149,152 +142,129 @@ python src/call_gpt_judge.py eval_set -o results.xlsx --no-skip-processed
 
 ---
 
+## 🔄 Typical Workflow
 
-
-## Directory Structure at a Glance
-
-* `organize_files.py`: Reads the JSONL task set (agreed to be in the dataset root directory) and organizes source/reference/model-output files into a unified directory structure by task ID.
-* `preprocessor/`: Preprocesses files such as PDF/Word/Excel/Markdown/Image, and writes results into `metadata.json` under `preprocess_info`.
-* `build_prompt/`: Generates `content_parts.jsonl` based on `metadata.json` plus preprocessing outputs.
-* `call_gpt_judge.py`: Calls Azure OpenAI for evaluation and writes results into Excel.
-* `prompt_build_pipeline.py`: A three-step pipeline script (paths must be checked; see below).
+1. Build or load a JSONL task set.
+2. Organize source/reference/model-output files by task ID.
+3. Preprocess files (extract text, screenshots, snapshots, etc.).
+4. Build judge input payloads (`content_parts.jsonl`).
+5. Run GPT Judge and export scoring results to Excel.
 
 ---
 
-## Typical Workflow
+## 📁 Directory Structure at a Glance
 
-1. Excel annotations → JSONL task set (if you want to build your own dataset)
-2. Organize files using the JSONL task set (aggregate outputs/sources/references)
-3. Preprocess (extract text/images/screenshots, etc.)
-4. Generate evaluation content (`content_parts.jsonl`)
-5. Run GPT Judge to produce a scoring Excel file
-
-Below are the key configurations and usage for each script.
+- `src/organize_files.py`: reads JSONL tasks and organizes source/reference/model-output files into task directories.
+- `src/preprocessor/`: preprocesses PDF/Word/Excel/Markdown/Image files and appends `preprocess_info` into `metadata.json`.
+- `src/build_prompt/`: builds `content_parts.jsonl` from metadata + preprocessing outputs.
+- `src/prompt_build_pipeline.py`: one-command pipeline for steps 1-3.
+- `src/call_gpt_judge.py`: calls Azure OpenAI judge and writes Excel outputs.
 
 ---
 
-## 1) `organize_files.py` (Organize Files)
+## ⚙️ Script Details
 
-Purpose: Reads JSONL and creates task directories at `target_dir/<model>/<id>/`, then copies:
-source files, reference files, and model output files. Finally, it generates `metadata.json`.
+### 1) `organize_files.py`
 
-Command line:
+Purpose: create `target_dir/<model>/<task_id>/` and copy:
+- source files
+- reference files
+- model output files
+
+Then generate `metadata.json` per task.
+
+Example:
 
 ```bash
 python src/organize_files.py --dataset-dir data/workflow --output-dir data/opus --target-dir data/eval_dataset_opus
 ```
 
-Key arguments:
+Key args:
+- `--dataset-dir`: dataset root containing JSONL (`*.jsonl` auto-detected)
+- `--output-dir`: model output root (subdirectory per model)
+- `--target-dir`: organized output root
+- `--log-level`: `DEBUG|INFO|WARNING|ERROR`
 
-* `--dataset-dir`: Dataset directory containing JSONL (the script auto-detects `*.jsonl`).
-* `--output-dir`: Model output directory (one subdirectory per model).
-* `--target-dir`: The organized output directory (root used by preprocessing/prompt building).
-* `--log-level`: `DEBUG/INFO/WARNING/ERROR`.
+### 2) `preprocessor/preprocessor_main.py`
 
----
-
-## 2) `preprocessor/` (Preprocessing)
-
-Entry script: `preprocessor/preprocessor_main.py`
+Example:
 
 ```bash
 python src/preprocessor/preprocessor_main.py --root-dir data/eval_dataset_opus
 ```
 
-Key arguments:
+Key args:
+- `--root-dir`: pipeline root produced by `organize_files.py`
+- `--models`: optional list of specific model folders
 
-* `--root-dir`: The `target-dir` produced by `organize_files.py`.
-* `--models`: Optional. Specify which model directories to process (space-separated).
+Dependencies by file type:
+- PDF: `PyMuPDF`
+- Word: `python-docx`
+- Excel: `xlwings` + local Microsoft Excel
 
-Dependencies:
+### 3) `build_prompt/content_builder/content_builder.py`
 
-* PDF: `PyMuPDF`
-* Word: `python-docx`
-* Excel: `xlwings` (requires Microsoft Excel installed locally)
-
-Key configuration:
-
-* Text descriptions are defined in `preprocessor/preprocessor_base.py` via `PreprocessorConfig`.
-* Preprocessing results are written to `metadata.json` under `preprocess_info`.
-* Special-case logs: `preprocessing_special_cases.log`.
-
----
-
-## 3) `build_prompt/` (Generate `content_parts`)
-
-Entry module: `build_prompt/content_builder/content_builder.py`
+Example:
 
 ```bash
-set PYTHONPATH=src
 python -m src.build_prompt.content_builder.content_builder data/eval_dataset_opus
 ```
 
-Key configuration: `build_prompt/content_builder/config.py`
-
-* Size limits: `MAX_IMAGES`, `MAX_TEXT_CHARS`
-* Extension sets: `EXCEL_EXTENSIONS`, `IMAGE_EXTENSIONS`, `TEXT_EXTENSIONS`, etc.
-* Cache directory name: `CACHE_DIR_NAME`
-* Output filename: `OUTPUT_JSONL_NAME` (default: `content_parts.jsonl`)
-* Caption templates: `Captions.*`
+Key config: `src/build_prompt/content_builder/config.py`
+- `MAX_IMAGES`, `MAX_TEXT_CHARS`
+- extension sets (`EXCEL_EXTENSIONS`, `IMAGE_EXTENSIONS`, `TEXT_EXTENSIONS`, ...)
+- cache settings and output filename
 
 Outputs:
+- `content_parts.jsonl` under each model directory
+- `_cache/` under each task directory
 
-* Generates `content_parts.jsonl` under each model directory.
-* Generates `_cache/` under each task directory (diff, snapshot, screenshots cache, etc.).
+### 4) `prompt_build_pipeline.py`
 
----
+Runs:
+1. organize files
+2. preprocess files
+3. generate `content_parts.jsonl`
 
-## 4) `prompt_build_pipeline.py`
-
-A three-step pipeline script:
-
-** (1) Organize files → (2) Preprocess → (3) Generate `content_parts`**
-
----
-
-## 5) `call_gpt_judge.py` (GPT Judge)
+### 5) `call_gpt_judge.py`
 
 Supports two input modes:
-
-* Input a JSONL file (single Excel output)
-* Input a root directory (one Excel output per model subdirectory)
+- single JSONL input -> one Excel output
+- root directory input -> one Excel per model directory
 
 Examples:
 
 ```bash
-# Process a single JSONL
-python src/call_gpt_judge.py data/eval_dataset_opus/model_a/content_parts.jsonl -o results.xlsx --api-key ... --azure-endpoint ...
+# Single JSONL
+python src/call_gpt_judge.py data/eval_dataset_opus/model_a/content_parts.jsonl -o results.xlsx --api-key "<YOUR_KEY>" --azure-endpoint "<YOUR_ENDPOINT>"
 
-# Process a root directory (one results Excel per model)
-python src/call_gpt_judge.py data/eval_dataset_opus -o results.xlsx
+# Root directory (per-model Excel)
+python src/call_gpt_judge.py data/eval_dataset_opus -o results.xlsx --api-key "<YOUR_KEY>" --azure-endpoint "<YOUR_ENDPOINT>"
 ```
-
-Key configuration (in `APIConfig` inside the script):
-
-* `AZURE_ENDPOINT`, `API_KEY`, `API_VERSION`
-* `MODEL`: Azure deployment name
-* `MAX_TOKENS`, `MAX_COMPLETION_TOKENS`, `TEMPERATURE`
-* `MAX_RETRIES`, `RATE_LIMIT_DELAY`
-
-CLI arguments can override these settings (e.g., `--api-key`, `--azure-endpoint`, `--model`).
 
 ---
 
+## 📝 Notes
 
-## Notes
-
-* Excel-related functionality depends on `xlwings` and a local Microsoft Excel installation; Windows is typically more stable.
-* In our previous evaluation, we used GPT-5-mini, but we recently ound that using frontier models or voting via multiple runs will improve the evaluation reliability.
-* Missing `preprocess_info` usually means dependencies are not installed or the file type is not included in the preprocessing chain.
-* Prompt length management: In `src\build_prompt\content_builder\token_counter.py`, it is split into two parts—an image limit and a text character limit—and they are calculated separately. If the image limit exceeds the configured value, images are dropped from `content_parts` starting from the end. If the text character count exceeds the limit, text in `content_parts` is truncated from the end. The maximum number of images and the maximum text character count are configured in `src\build_prompt\content_builder\config.py`.
-
-## Legacy code
-The code used in the paper is an older version, located in the `previous` branch. Link: https://github.com/FinWorkBench/Finch/tree/previous
-
-The new code has been optimized based on this foundation.
+- In previous evaluations we used GPT-5-mini; stronger frontier models or multi-run voting can improve evaluation reliability.
+- Excel-related functionality depends on `xlwings` and a local Microsoft Excel installation; Windows is usually more stable.
+- Prompt length management is implemented in `src/build_prompt/content_builder/token_counter.py` and configured via `MAX_IMAGES` and `MAX_TEXT_CHARS` in `config.py`.
+- If image count exceeds the limit, images are removed from the end; if text length exceeds the limit, text is truncated from the end.
+- Missing `preprocess_info` usually indicates missing dependencies or unsupported/unprocessed file types.
 
 
-## Citation
+---
+
+## 🗂 Legacy Code
+
+The code version used in the paper is maintained in the [`previous` branch](https://github.com/FinWorkBench/Finch/tree/previous).
+
+This branch contains the newer and unified implementation for Modification, Generation, and QA.
+
+---
+
+## 📚 Citation
+
 ```bibtex
 @article{dong2025finch,
   title={Finch: Benchmarking Finance \& Accounting across Spreadsheet-Centric Enterprise Workflows},
