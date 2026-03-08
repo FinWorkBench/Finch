@@ -1,8 +1,13 @@
-# Finch Automated Code Judger Overview
+# FinWorkBench: Benchmarking Finance & Accounting across Spreadsheet-Centric Enterprise Workflows
+
+This repository contains the evaluation code for **FinWorkBench**, an enterprise-grade benchmark for evaluating an agent’s ability to work like a skilled finance & accounting expert on real-world professional workflows.
+
+* **Dataset**: https://huggingface.co/datasets/FinWorkBench/Finch
+* **Paper**: https://arxiv.org/abs/2512.13168
 
 This directory contains the complete pipeline scripts from labeled data to evaluation content generation. The core flow is:
 
-**JSONL task set → organize model outputs + source/reference files → preprocess files → generate evaluation `content_parts` → GPT Judge scoring.**
+**JSONL task set → organize model outputs + source/reference files → preprocess files → build prompts → GPT Judge scoring.**
 
 The JSONL task set is already included in the **huggingface-Finch** dataset. You can also organize your own JSONL task set following the same conventions. JSONL task set is agreed to be in the dataset root directory.
 
@@ -10,7 +15,9 @@ The JSONL task set is already included in the **huggingface-Finch** dataset. You
 
 ## Quick Start (Finch / FinWorkBench)
 
-This quick start walks you through: **download dataset → build eval set → generate content parts → run GPT Judge → get `results.xlsx`**.
+This quick start walks you through: **download dataset → preprocess eval set → build prompts → run GPT Judge → get `results.xlsx`**.
+
+If you want to **reuse our peprocessed results** for GPT 5.1 Pro, Claude Sonnect 4.5, and Claude Opus 4.5, please directly download them from https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link and **directly run GPT Judge** by skipping dataset downloading and preprocessing.
 
 ---
 
@@ -160,7 +167,7 @@ python src/call_gpt_judge.py eval_set -o results.xlsx --no-skip-processed
 2. Organize files using the JSONL task set (aggregate outputs/sources/references)
 3. Preprocess (extract text/images/screenshots, etc.)
 4. Generate evaluation content (`content_parts.jsonl`)
-5. Optional: Run GPT Judge to produce a scoring Excel
+5. Run GPT Judge to produce a scoring Excel file
 
 Below are the key configurations and usage for each script.
 
@@ -237,7 +244,15 @@ Outputs:
 
 ---
 
-## 4) `call_gpt_judge.py` (GPT Judge)
+## 4) `prompt_build_pipeline.py`
+
+A three-step pipeline script:
+
+** (1) Organize files → (2) Preprocess → (3) Generate `content_parts`**
+
+---
+
+## 5) `call_gpt_judge.py` (GPT Judge)
 
 Supports two input modes:
 
@@ -265,17 +280,11 @@ CLI arguments can override these settings (e.g., `--api-key`, `--azure-endpoint`
 
 ---
 
-## 5) `prompt_build_pipeline.py`
-
-A three-step pipeline script:
-
-**Organize files → Preprocess → Generate `content_parts`**
-
----
 
 ## Notes
 
 * Excel-related functionality depends on `xlwings` and a local Microsoft Excel installation; Windows is typically more stable.
+* In our previous evaluation, we used GPT-5-mini, but we recently ound that using frontier models or voting via multiple runs will improve the evaluation reliability.
 * Missing `preprocess_info` usually means dependencies are not installed or the file type is not included in the preprocessing chain.
 * Prompt length management: In `src\build_prompt\content_builder\token_counter.py`, it is split into two parts—an image limit and a text character limit—and they are calculated separately. If the image limit exceeds the configured value, images are dropped from `content_parts` starting from the end. If the text character count exceeds the limit, text in `content_parts` is truncated from the end. The maximum number of images and the maximum text character count are configured in `src\build_prompt\content_builder\config.py`.
 
@@ -283,3 +292,14 @@ A three-step pipeline script:
 The code used in the paper is an older version, located in the `previous` branch. Link: https://github.com/FinWorkBench/Finch/tree/previous
 
 The new code has been optimized based on this foundation.
+
+
+## Citation
+```bibtex
+@article{dong2025finch,
+  title={Finch: Benchmarking Finance \& Accounting across Spreadsheet-Centric Enterprise Workflows},
+  author={Dong, Haoyu and Zhang, Pengkun and Gao, Yan and Dong, Xuanyu and Cheng, Yilin and Lu, Mingzhe and Yakefu, Adina and Zheng, Shuxin},
+  journal={arXiv preprint arXiv:2512.13168},
+  year={2025}
+}
+```
