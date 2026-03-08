@@ -34,7 +34,7 @@ src/
 
 This guide walks you through: **download dataset &rarr; preprocess &rarr; build prompts &rarr; run GPT Judge &rarr; get `results.xlsx`**.
 
-> **Shortcut:** If you want to reuse our preprocessed results for GPT-5.1 Pro, Claude Sonnet 4.5, and Claude Opus 4.5, download them from [Google Drive](https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link) and skip directly to Run GPT Judge.
+> **Shortcut:** If you want to reuse our preprocessed results for GPT-5.1 Pro, Claude Sonnet 4.5, and Claude Opus 4.5, download them from [Google Drive](https://drive.google.com/file/d/1GMJz-gO33a8w5rlZYVhXqjxhlizLEmOM/view?usp=drive_link) and skip directly to [Step 4 (Run GPT Judge)](#4--run-gpt-judge).
 
 ### 1) :gear: Prerequisites
 
@@ -53,7 +53,7 @@ pip install pandas openpyxl pymupdf python-docx xlwings openai
 
 | Dependency | Required for |
 |---|---|
-| `xlwings` + Microsoft Excel | Excel preprocessing (Windows recommended) |
+| `xlwings` + Microsoft Excel | Excel preprocessing (Windows recommended for stability) |
 | `PyMuPDF` (`fitz`) | PDF preprocessing |
 | `python-docx` | Word document preprocessing |
 
@@ -158,9 +158,9 @@ Reads the JSONL task set and creates task directories at `target_dir/<model>/<ta
 
 ```bash
 python src/organize_files.py \
-    --dataset-dir data/workflow \
-    --output-dir data/opus \
-    --target-dir data/eval_dataset_opus
+    --dataset-dir Finch \
+    --output-dir YOUR_MODEL_OUTPUT \
+    --target-dir eval_set
 ```
 
 | Argument | Description |
@@ -175,7 +175,7 @@ python src/organize_files.py \
 Processes PDF, Word, Excel, Markdown, and image files. Results are written into `metadata.json` under the `preprocess_info` field.
 
 ```bash
-python src/preprocessor/preprocessor_main.py --root-dir data/eval_dataset_opus
+python src/preprocessor/preprocessor_main.py --root-dir eval_set
 ```
 
 | Argument | Description |
@@ -191,7 +191,7 @@ Generates `content_parts.jsonl` for each model directory, based on `metadata.jso
 
 ```bash
 set PYTHONPATH=src
-python -m src.build_prompt.content_builder.content_builder data/eval_dataset_opus
+python -m src.build_prompt.content_builder.content_builder eval_set
 ```
 
 **Configuration** (`build_prompt/content_builder/config.py`):
@@ -211,16 +211,16 @@ python -m src.build_prompt.content_builder.content_builder data/eval_dataset_opu
 
 Supports two input modes:
 
-- **Single JSONL file** -- produces one Excel output.
-- **Root directory** -- produces one `results.xlsx` per model subdirectory.
+- **Single JSONL file** -- scores one model and writes a single `results.xlsx`.
+- **Root directory** -- scores all models and writes one `results.xlsx` per model subdirectory.
 
 ```bash
-# Single JSONL
-python src/call_gpt_judge.py data/eval_dataset_opus/model_a/content_parts.jsonl \
+# Single model
+python src/call_gpt_judge.py eval_set/opus_4.5_output/content_parts.jsonl \
     -o results.xlsx --api-key "<YOUR_KEY>" --azure-endpoint "<YOUR_ENDPOINT>"
 
-# Root directory (per-model Excel)
-python src/call_gpt_judge.py data/eval_dataset_opus -o results.xlsx \
+# All models under a root directory
+python src/call_gpt_judge.py eval_set -o results.xlsx \
     --api-key "<YOUR_KEY>" --azure-endpoint "<YOUR_ENDPOINT>"
 ```
 
