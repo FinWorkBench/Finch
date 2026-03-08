@@ -499,6 +499,14 @@ def main():
         logging.error("Please provide --azure-endpoint or set AZURE_ENDPOINT in the script")
         return 1
 
+    if not config.MODEL:
+        logging.error("Please provide --model or set MODEL in the script")
+        return 1
+
+    if not config.API_VERSION:
+        logging.error("Please provide --api-version or set API_VERSION in the script")
+        return 1
+
     input_path = Path(args.input)
 
     # Parse models filter
@@ -533,10 +541,15 @@ def main():
 
     logging.info(f"Root-dir mode: found {len(model_dirs)} model dir(s).")
 
+    skipped_models = []
     for model_dir in model_dirs:
         jsonl_path = model_dir / args.jsonl_name
         if not jsonl_path.exists():
-            logging.warning(f"Skip model '{model_dir.name}': missing {args.jsonl_name}")
+            logging.error(
+                f"Skip model '{model_dir.name}': missing {args.jsonl_name}. "
+                f"Did the preprocessing/build-prompts step complete successfully?"
+            )
+            skipped_models.append(model_dir.name)
             continue
 
         output_excel = resolve_model_output_excel(model_dir, args.output)
@@ -557,6 +570,11 @@ def main():
         )
         processor.process_all()
 
+    if skipped_models:
+        logging.warning(
+            f"Skipped {len(skipped_models)} model(s) due to missing {args.jsonl_name}: "
+            f"{', '.join(skipped_models)}"
+        )
     logging.info("All models finished.")
     return 0
 

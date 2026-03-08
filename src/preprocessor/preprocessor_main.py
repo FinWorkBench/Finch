@@ -9,8 +9,16 @@ Scans each task directory and applies appropriate preprocessors.
 import json
 import logging
 import argparse
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+
+# Ensure the preprocessor package directory is on sys.path so that sibling
+# module imports work regardless of how this script is invoked (direct script
+# execution, subprocess from pipeline, etc.).
+_THIS_DIR = Path(__file__).resolve().parent
+if str(_THIS_DIR) not in sys.path:
+    sys.path.insert(0, str(_THIS_DIR))
 
 from preprocessor_base import PreprocessorConfig
 from preprocessor_pdf import PDFPreprocessor

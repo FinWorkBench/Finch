@@ -282,30 +282,34 @@ class FileOrganizer:
         
         return True
     
-    def organize(self):
-        """Main method to organize all files."""
+    def organize(self) -> bool:
+        """Main method to organize all files.
+
+        Returns:
+            True if organization completed successfully, False on critical errors.
+        """
         logger.info("Starting file organization...")
-        
+
         # Find JSONL file
         jsonl_path = self.find_jsonl_file()
         if not jsonl_path:
-            return
-        
+            return False
+
         logger.info(f"Using JSONL file: {jsonl_path}")
-        
+
         # Build file index
         self.build_file_index()
-        
+
         # Get list of models from output directory
         if not self.output_dir.exists():
             logger.error(f"Output directory does not exist: {self.output_dir}")
-            return
-        
+            return False
+
         model_dirs = [d for d in self.output_dir.iterdir() if d.is_dir()]
-        
+
         if not model_dirs:
             logger.error(f"No model subdirectories found in: {self.output_dir}")
-            return
+            return False
         
         logger.info(f"Found {len(model_dirs)} model(s): {[d.name for d in model_dirs]}")
         
@@ -340,6 +344,7 @@ class FileOrganizer:
                 logger.error(f"Error reading JSONL file: {e}")
         
         logger.info("\nFile organization complete!")
+        return True
 
 
 def main():
@@ -380,8 +385,10 @@ def main():
         output_dir=args.output_dir,
         target_dir=args.target_dir
     )
-    
-    organizer.organize()
+
+    success = organizer.organize()
+    if not success:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
