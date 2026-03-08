@@ -64,6 +64,10 @@ class ExcelResultManager:
         self.columns = [
             "task_id",
             "score",
+            "completeness",
+            "correctness",
+            "over_edit_avoidance",
+            "readability",
             "detailed_analysis",
             "timestamp",
             "model",
@@ -90,6 +94,10 @@ class ExcelResultManager:
         row_data = [
             result.get("task_id", ""),
             result.get("score", ""),
+            result.get("completeness", ""),
+            result.get("correctness", ""),
+            result.get("over_edit_avoidance", ""),
+            result.get("readability", ""),
             result.get("detailed_analysis", ""),
             result.get("timestamp", ""),
             result.get("model", ""),
@@ -162,6 +170,14 @@ class GPTJudgeCaller:
                         "model": self.config.MODEL
                     }
 
+    # Sub-criteria field names expected in the judge JSON output.
+    SUB_CRITERIA = ["completeness", "correctness", "over_edit_avoidance", "readability"]
+
+    @classmethod
+    def _extract_sub_criteria(cls, result: dict) -> Dict[str, Any]:
+        """Extract the 4 sub-criteria scores from a parsed judge result."""
+        return {k: result.get(k) for k in cls.SUB_CRITERIA}
+
     def _parse_response(self, response_text: str) -> Dict[str, Any]:
         """
         Parse model response.
@@ -220,7 +236,8 @@ class GPTJudgeCaller:
                 return {
                     "score": result["score"],
                     "detailed_analysis": result["detailed_analysis"],
-                    "error": None
+                    "error": None,
+                    **self._extract_sub_criteria(result),
                 }
             # Missing required fields => count as fail
             return {
@@ -240,7 +257,8 @@ class GPTJudgeCaller:
                         return {
                             "score": result.get("score"),
                             "detailed_analysis": result.get("detailed_analysis"),
-                            "error": None
+                            "error": None,
+                            **self._extract_sub_criteria(result),
                         }
                     # JSON extracted but missing fields => fail
                     return {
@@ -259,7 +277,8 @@ class GPTJudgeCaller:
                     return {
                         "score": result.get("score"),
                         "detailed_analysis": result.get("detailed_analysis"),
-                        "error": None
+                        "error": None,
+                        **self._extract_sub_criteria(result),
                     }
             except Exception:
                 pass
@@ -346,6 +365,10 @@ class JudgeProcessor:
                     excel_result = {
                         "task_id": task_id,
                         "score": result.get("score"),
+                        "completeness": result.get("completeness"),
+                        "correctness": result.get("correctness"),
+                        "over_edit_avoidance": result.get("over_edit_avoidance"),
+                        "readability": result.get("readability"),
                         "detailed_analysis": result.get("detailed_analysis"),
                         "timestamp": datetime.now().isoformat(),
                         "model": result.get("model", self.config.MODEL),

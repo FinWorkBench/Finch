@@ -62,8 +62,19 @@ Please strictly return the evaluation result in JSON format, including the follo
 
 {{
   "score": 0 or 1,
+  "completeness": 0 or 1,
+  "correctness": 0 or 1,
+  "over_edit_avoidance": 0 or 1,
+  "readability": 0 or 1,
   "detailed_analysis": "The reasoning for your judgment, briefly explaining which aspects meet or do not meet the requirements"
 }}
+
+Field definitions:
+- "score": overall pass (1) or fail (0).
+- "completeness": 1 if the model completed all requirements in the instruction without omissions; 0 otherwise. (Maps to "Data Completeness" above.)
+- "correctness": 1 if all values, formulas, charts, and text are logically equivalent to the reference answer; 0 otherwise. (Maps to "Data Accuracy" above.)
+- "over_edit_avoidance": 1 if the model did not make unnecessary modifications beyond the instruction scope; 0 otherwise. (Maps to "Reasonableness of Changes" above.)
+- "readability": 1 if the output preserves proper formatting, structure, and layout as expected; 0 otherwise. (Maps to "Other requirements" above.)
 
 Do not output any content other than JSON.
 """.strip()
@@ -98,7 +109,11 @@ Please make your judgment by comprehensively analyzing all input information.
    - Note: For numeric cells, 0 and blank are considered equivalent unless the instruction explicitly requires otherwise.
    - Note (applicable only to web-search or external-source tasks): In  web-search or external-source tasks, the reference and the model answer may come from different websites/databases and thus differ slightly due to time lag, definition/measurement differences, or rounding. Only in this setting, when comparing numeric values, apply a small tolerance band: if the model’s value is within a reasonable tolerance of the reference (≤1% relative error or ≤0.5 absolute units; for percentages/ratios allow ±0.5 percentage points) and the discrepancy does not change the conclusion or violate the instruction, do not fail the answer on that basis.
 
-3. Other requirements:
+3. Over-edit Avoidance:
+   - The model should not generate content that obviously exceeds or deviates from the instruction requirements.
+   - Do not add, remove, or restructure data beyond what the instruction asks for.
+
+4. Readability:
    - When transcribing or translating across file types or languages, it should be judged as a failure—even if the content is accurate—if the reference uses a pivot/hierarchical table but the model output converts it into a regular table, or if the model aligns the table using spaces/tabs instead of preserving the reference’s clear grid structure.
 
 If you feel there is insufficient information to make a definite judgment, please judge as much as possible based on what you can see and explain the uncertainties in your reasoning.
@@ -109,8 +124,19 @@ Please strictly return the evaluation result in JSON format, including the follo
 
 {{
   "score": 0 or 1,
+  "completeness": 0 or 1,
+  "correctness": 0 or 1,
+  "over_edit_avoidance": 0 or 1,
+  "readability": 0 or 1,
   "detailed_analysis": "The reasoning for your judgment, briefly explaining which aspects meet or do not meet the requirements"
 }}
+
+Field definitions:
+- "score": overall pass (1) or fail (0).
+- "completeness": 1 if the model implemented all content required in the instruction without omissions; 0 otherwise. (Maps to "Data Completeness" above.)
+- "correctness": 1 if all values, text, and charts are logically equivalent to the reference answer; 0 otherwise. (Maps to "Data Accuracy and Logical Equivalence" above.)
+- "over_edit_avoidance": 1 if the model did not generate content beyond the instruction scope; 0 otherwise. (Maps to "Over-edit Avoidance" above.)
+- "readability": 1 if the output preserves proper formatting, structure, and layout as expected; 0 otherwise. (Maps to "Readability" above.)
 
 Do not output any content other than JSON.
 """.strip()
