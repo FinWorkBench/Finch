@@ -21,6 +21,7 @@ Examples:
 import argparse
 import json
 import logging
+import sys
 import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -29,6 +30,13 @@ from datetime import datetime
 import pandas as pd
 from openpyxl import load_workbook
 from openai import AzureOpenAI
+
+# Ensure sibling packages are importable (e.g. build_prompt.content_builder.prompts)
+_SRC_DIR = Path(__file__).resolve().parent
+if str(_SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SRC_DIR))
+
+from build_prompt.content_builder.prompts import JUDGE_PROMPT_EXCEL, JUDGE_PROMPT_GENERAL
 
 
 
@@ -136,7 +144,33 @@ class GPTJudgeCaller:
         logging.info(f"Initialized GPT Judge with Azure deployment/model: {config.MODEL}")
 
 
+    @staticmethod
+    def _upgrade_prompt(content_parts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Replace the baked-in judge prompt with the current version from prompts.py.
+
+        The first text element in content_parts is always the judge prompt
+        (inserted by content_builder). If it was built with an older prompt
+        version (e.g. missing sub-criteria fields), this ensures the latest
+        prompt is used at call time.
+        """
+        if not content_parts or content_parts[0].get("type") != "text":
+            return content_parts
+
+        old_text = content_parts[0]["text"]
+        # Skip if prompt already matches the current version
+        if old_text == JUDGE_PROMPT_EXCEL or old_text == JUDGE_PROMPT_GENERAL:
+            return content_parts
+
+        # Detect prompt type: EXCEL prompt mentions "reference Excel file"
+        if "reference Excel file" in old_text:
+            content_parts[0]["text"] = JUDGE_PROMPT_EXCEL
+        else:
+            content_parts[0]["text"] = JUDGE_PROMPT_GENERAL
+
+        return content_parts
+
     def call_api(self, content_parts: List[Dict[str, Any]]) -> Dict[str, Any]:
+        content_parts = self._upgrade_prompt(content_parts)
         start_time = time.time()
 
         for attempt in range(self.config.MAX_RETRIES):
