@@ -13,6 +13,11 @@ The JSONL task set is included in the [Finch HuggingFace dataset](https://huggin
 
 ---
 
+## :beers: Updates
++ **2026-4-6**: FinWorkBench is accepted to ACL 2026 Findings.
+
+---
+
 ## :open_file_folder: Repository Structure
 
 ```
